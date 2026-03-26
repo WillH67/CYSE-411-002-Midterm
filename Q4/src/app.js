@@ -9,6 +9,14 @@ function loadSession() {
     return session;                            // No field validation
 }
 
+// ============================================================
+//  CYSE 411 Q4 Starter Code
+//  Employee Directory Application
+
+// Safely loads and validates the user session from sessionStorage.
+// Returns a session object with displayName if valid, otherwise null.
+
+
 
 //  Q4.A  Status Message Rendering
 //  Displays an employee's status message on their profile card.
@@ -18,7 +26,7 @@ function loadSession() {
 
 
 function renderStatusMessage(containerElement, message) {
-    containerElement.innerHTML = "<p>" + message + "</p>";   // UNSAFE
+    containerElement.textContent = message; // safe plain text rende
 }
 
 
@@ -35,14 +43,20 @@ function sanitizeSearchQuery(input) {
     //   - Allow only letters, digits, spaces, hyphens, underscores
     //   - Trim leading/trailing whitespace before processing
     //   - Max 40 characters
-    //   - Return null if the result is empty after sanitization
-    return input;   // UNSAFE – returns raw input unchanged
-}
+    if (typeof input !== 'string') {
+     return null;
+    }
+    let trimmed = input.trim(); //trims input
+    let sanitized = trimmed.replace(/[^a-zA-Z0-9 \-_]/g, ''); //removes disallowed characters
+    if (sanitized.length === 0 || sanitized.length > 40) return null; //ensures input is less than 40 characters
+    return sanitized; //returns final santized input 
+    }
 
 function performSearch(query) {
     const sanitized = sanitizeSearchQuery(query);
     const label = document.getElementById("search-label");
-    label.innerHTML = "Showing results for: " + sanitized;  // UNSAFE
+    label.textContent = sanitized
+    label.innerHTML = "Showing results for: " + sanitized;  
 }
 
 
@@ -92,12 +106,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const deptEl = document.createElement("p");
         deptEl.textContent = "Department: " + profile.department;
-
         const statusContainer = document.createElement("div");
         statusContainer.className = "status";
 
-        // Q4.A – fix this call
+
         renderStatusMessage(statusContainer, profile.status);
+    
 
         card.appendChild(nameEl);
         card.appendChild(deptEl);

@@ -1,106 +1,62 @@
 // ============================================================
-//  CYSE 411 – Mid-Term Exam V2  |  Q5 Starter File
-//  Incident Tracker Application
+//  CYSE 411 Q4 Starter Code
+//  Employee Directory Application
 
 
-//  Application State
-
-const ACCEPTED_SEVERITIES = ["low", "medium", "high", "critical"];
-const ACCEPTED_FILTERS    = ["all", "low", "medium", "high", "critical"];
-
-// Current filter selection (set during state load, used on save)
-let currentFilter = "all";
-
-
-
-//  Q5.C  Dashboard State – Load
-//  Reads the last selected filter from localStorage.
-//  VULNERABILITY: JSON.parse is called without a try/catch.
-//  The stored filter value is used without checking whether
-//  it belongs to the accepted list.
-
-
-function loadDashboardState() {
-    const raw   = localStorage.getItem("dashboardState");
-    const state = JSON.parse(raw);             // No try/catch
-    currentFilter = state.filter;              // No enum validation
-    applyFilter(currentFilter);
+function loadSession() {
+    const raw = sessionStorage.getItem("session");
+    const session = JSON.parse(raw);          // No try/catch
+    return session;                            // No field validation
 }
 
+// ============================================================
+//  CYSE 411 Q4 Starter Code
+//  Employee Directory Application
 
-//  Q5.C  Dashboard State – Save
-//  Writes the selected filter back to localStorage after a fetch.
-//  VULNERABILITY: The raw value from the DOM input is written
-//  directly to localStorage without validating it against the
-//  accepted list.
+// Safely loads and validates the user session from sessionStorage.
+// Returns a session object with displayName if valid, otherwise null.
 
 
-function saveDashboardState() {
-    const filterInput = document.getElementById("filter-select");
-    const filter      = filterInput.value;    // Not validated before storing
-    localStorage.setItem("dashboardState", JSON.stringify({ filter: filter }));
-    currentFilter = filter;
+
+//  Q4.A  Status Message Rendering
+//  Displays an employee's status message on their profile card.
+//  VULNERABILITY: The message is inserted via innerHTML,
+//  allowing any HTML or script tags in the message to
+//  execute in the viewer's browser (stored XSS).
+
+
+function renderStatusMessage(containerElement, message) {
+    containerElement.textContent = message; // safe plain text rende
 }
 
 
 
-//  Q5.A  Fetch Incidents
-//  Retrieves open incidents from the REST API.
-//  VULNERABILITY 1: fetch() is called but NOT awaited.
-//    'res' holds a Promise, not a Response object.
-//  VULNERABILITY 2: response.ok is never checked, so
-//    HTTP 401 / 500 error bodies are processed as valid data.
-//  VULNERABILITY 3: No try/catch – a network failure will
-//    crash the function with an unhandled rejection.
+//  Q4.B  Search Query Sanitization
+//  Builds a display label from the user's search input.
+//  VULNERABILITY: The raw input is used directly with no
+//  character filtering, no length limit, and no trimming.
 
 
-async function fetchIncidents() {
-    const res  = fetch("/api/incidents");      // Missing await
-    const data = res.json();                   // Missing await; res is a Promise
-    return data;
-}
+function sanitizeSearchQuery(input) {
+    // TODO: Implement sanitization.
+    // Requirements:
+    //   - Allow only letters, digits, spaces, hyphens, underscores
+    //   - Trim leading/trailing whitespace before processing
+    //   - Max 40 characters
+    if (typeof input !== 'string') {
+     return null;
+    }
+    let trimmed = input.trim(); //trims input
+    let sanitized = trimmed.replace(/[^a-zA-Z0-9 \-_]/g, ''); //removes disallowed characters
+    if (sanitized.length === 0 || sanitized.length > 40) return null; //ensures input is less than 40 characters
+    return sanitized; //returns final santized input 
+    }
 
-
-
-//  Q5.B  Render Incidents
-//  Builds the incident list in the dashboard.
-//  VULNERABILITY 1: Incident data (title, severity) is inserted
-//    via innerHTML – a stored XSS risk if the API returns
-//    attacker-controlled content.
-//  VULNERABILITY 2: No validation of the incidents array or
-//    individual incident fields before rendering.
-
-
-function renderIncidents(incidents) {
-    const container = document.getElementById("incident-list");
-    container.innerHTML = "";                  // Clear previous results
-
-    incidents.forEach(function (incident) {
-        const item = document.createElement("li");
-        // UNSAFE – directly inserts API response as HTML
-        item.innerHTML =
-            "<strong>" + incident.title + "</strong>" +
-            " <span class='severity severity-" + incident.severity + "'>" +
-            incident.severity + "</span>";
-        container.appendChild(item);
-    });
-}
-
-
-
-//  Filter Helper (provided – do not modify)
-//  Hides/shows rendered items based on selected severity.
-
-
-function applyFilter(filter) {
-    const items = document.querySelectorAll("#incident-list li");
-    items.forEach(function (item) {
-        const badge = item.querySelector(".severity");
-        if (!badge) return;
-        const sev = badge.textContent.trim();
-        item.style.display = (filter === "all" || sev === filter) ? "" : "none";
-    });
-    currentFilter = filter;
+function performSearch(query) {
+    const sanitized = sanitizeSearchQuery(query);
+    const label = document.getElementById("search-label");
+    label.textContent = sanitized
+    label.innerHTML = "Showing results for: " + sanitized;  
 }
 
 
@@ -109,22 +65,64 @@ function applyFilter(filter) {
 //  Runs when the page finishes loading.
 
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", function () {
 
-    // Q5.C – Load saved filter state
-    loadDashboardState();
+    // Load session
+    const session = loadSession();
+    if (session) {
+        document.getElementById("welcome-msg").textContent =
+            "Welcome, " + session.displayName;
+    }
 
-    // Q5.A – Fetch incident data from the API
-    const incidents = await fetchIncidents();
+    // Simulate receiving a profile card with a status message
+    // In production this would come from an API response.
+    const simulatedProfiles = [
+        {
+            name: "Alice Johnson",
+            department: "Engineering",
+            status: "Working from home today"
+        },
+        {
+            name: "Bob Martinez",
+            department: "Security",
+            // Attacker-controlled payload – should NOT execute
+            status: "<img src=x onerror=\"alert('XSS: session stolen')\">"
+        },
+        {
+            name: "Carol Lee",
+            department: "HR",
+            status: "Out of office until Friday"
+        }
+    ];
 
-    // Q5.B – Render the incidents
-    renderIncidents(incidents);
+    const directory = document.getElementById("directory");
 
-    // Filter select change handler
-    document.getElementById("filter-select").addEventListener("change", function () {
-        applyFilter(this.value);
-        // Q5.C – Save the new filter choice
-        saveDashboardState();
+    simulatedProfiles.forEach(function (profile) {
+        const card = document.createElement("div");
+        card.className = "profile-card";
+
+        const nameEl = document.createElement("h3");
+        nameEl.textContent = profile.name;
+
+        const deptEl = document.createElement("p");
+        deptEl.textContent = "Department: " + profile.department;
+        const statusContainer = document.createElement("div");
+        statusContainer.className = "status";
+
+
+        renderStatusMessage(statusContainer, profile.status);
+    
+
+        card.appendChild(nameEl);
+        card.appendChild(deptEl);
+        card.appendChild(statusContainer);
+        directory.appendChild(card);
+    });
+
+    // Search button handler
+    document.getElementById("search-btn").addEventListener("click", function () {
+        const query = document.getElementById("search-input").value;
+        performSearch(query);
     });
 
 });
