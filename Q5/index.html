@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Incident Tracker – CYSE 411 Q5</title>
+    <style>
+        /* ── Reset & Base ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        /* ── Top Bar ── */
+        header {
+            background: #1f3864;
+            color: #fff;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 { font-size: 1.1rem; letter-spacing: 0.5px; }
+        .header-sub {
+            font-size: 0.82rem;
+            opacity: 0.75;
+        }
+
+        /* ── Main Layout ── */
+        main {
+            max-width: 860px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        /* ── Exam Notice ── */
+        .exam-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            font-size: 0.85rem;
+            color: #6b4f00;
+        }
+        .exam-notice strong { color: #856404; }
+
+        /* ── Control Bar ── */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            background: #fff;
+            border: 1px solid #dde3ed;
+            border-radius: 8px;
+            padding: 12px 18px;
+        }
+        .controls label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+        }
+        #filter-select {
+            padding: 7px 12px;
+            border: 1px solid #c5cdd9;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #f9fafc;
+            cursor: pointer;
+            outline: none;
+        }
+        #filter-select:focus { border-color: #1f3864; }
+
+        /* ── Incident List ── */
+        .panel {
+            background: #fff;
+            border: 1px solid #dde3ed;
+            border-radius: 10px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .panel h2 {
+            font-size: 1rem;
+            color: #1f3864;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        #incident-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #incident-list li {
+            padding: 12px 16px;
+            background: #f7f9fc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        #incident-list li strong {
+            flex: 1;
+            color: #1a1a2e;
+        }
+
+        /* ── Severity Badges ── */
+        .severity {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .severity-low      { background: #d4edda; color: #155724; }
+        .severity-medium   { background: #fff3cd; color: #856404; }
+        .severity-high     { background: #ffe0b2; color: #7f3500; }
+        .severity-critical { background: #f8d7da; color: #721c24; }
+
+        /* ── Mock API notice ── */
+        .api-notice {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🛡️ Incident Tracker</h1>
+        <span class="header-sub">CYSE 411 – Q5 Exam Environment</span>
+    </header>
+
+    <main>
+
+        <!-- Exam context notice – do not remove -->
+        <div class="exam-notice">
+            <strong>CYSE 411 – Q5 Exam Environment.</strong>
+            The page uses a mock service worker (mock-api.js) to intercept
+            <code>/api/incidents</code> requests and return simulated data,
+            including one incident with a malicious title payload.
+            Open the browser DevTools Console to observe errors and verify your fixes.
+        </div>
+
+        <!-- Filter control -->
+        <div class="controls">
+            <label for="filter-select">Filter by Severity:</label>
+            <select id="filter-select">
+                <option value="all">All</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+            </select>
+        </div>
+
+        <!-- Incident panel -->
+        <div class="panel">
+            <h2>Open Incidents</h2>
+            <ul id="incident-list">
+                <li style="color:#888; font-style:italic;">Loading incidents…</li>
+            </ul>
+        </div>
+
+        <p class="api-notice">
+            Data served by mock-api.js · Real endpoint: <code>/api/incidents</code>
+        </p>
+
+    </main>
+
+    <!--  Mock API (Service Worker alternative)
+         Intercepts fetch('/api/incidents') so the page works without a
+         real backend. Includes one incident with an XSS payload in the
+         title to demonstrate Q5.B vulnerability.
+         DO NOT MODIFY this block. -->
+    <script>
+        // Seed an intentionally CORRUPTED state into localStorage
+        // to help students observe the Q5.C vulnerability.
+        // A legitimate state would be: { "filter": "all" }
+        // This tampered state stores an invalid filter value.
+        localStorage.setItem("dashboardState", JSON.stringify({
+            filter: "<script>alert('stored XSS')<\/script>"
+        }));
+
+        //  Intercept fetch() with a patched global 
+        // Simulates /api/incidents returning JSON data.
+        // Includes a stored XSS payload in one incident title.
+        const _realFetch = window.fetch.bind(window);
+        window.fetch = function (url, options) {
+            if (typeof url === "string" && url.includes("/api/incidents")) {
+                const mockData = [
+                    {
+                        title: "Unauthorized login attempt detected",
+                        severity: "high"
+                    },
+                    {
+                        title: "SSL certificate expiring in 3 days",
+                        severity: "medium"
+                    },
+                    {
+                        // Attacker-controlled payload – should NOT execute (Q5.B)
+                        title: "<img src=x onerror=\"alert('XSS Q5: token=\" + document.cookie)\">",
+                        severity: "critical"
+                    },
+                    {
+                        title: "Dependency vulnerability in lodash@4.17.15",
+                        severity: "medium"
+                    },
+                    {
+                        title: "Brute-force scan from external IP range",
+                        severity: "critical"
+                    },
+                    {
+                        title: "Routine log rotation completed",
+                        severity: "low"
+                    },
+                    {
+                        // Missing 'severity' field – should be skipped (Q5.B validation)
+                        title: "Incomplete incident record"
+                    }
+                ];
+                return Promise.resolve(
+                    new Response(JSON.stringify(mockData), {
+                        status: 200,
+                        headers: { "Content-Type": "application/json" }
+                    })
+                );
+            }
+            return _realFetch(url, options);
+        };
+    </script>
+
+    <!-- Student's code (do not change this path) -->
+    <script src="src/tracker.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Directory – CYSE 411 Q4</title>
+    <style>
+        /* ── Reset & Base ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        /* ── Top Bar ── */
+        header {
+            background: #1f3864;
+            color: #fff;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 { font-size: 1.1rem; letter-spacing: 0.5px; }
+        #welcome-msg {
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.12);
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+
+        /* ── Main Layout ── */
+        main {
+            max-width: 960px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        /* ── Search Bar ── */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        #search-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #c5cdd9;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #search-input:focus { border-color: #1f3864; }
+        #search-btn {
+            background: #1f3864;
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #search-btn:hover { background: #2e4f8f; }
+
+        /* Search result label */
+        #search-label {
+            font-size: 0.85rem;
+            color: #555;
+            min-height: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* ── Directory Grid ── */
+        #directory {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        /* ── Profile Card ── */
+        .profile-card {
+            background: #fff;
+            border: 1px solid #dde3ed;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .profile-card h3 {
+            font-size: 1rem;
+            color: #1f3864;
+            margin-bottom: 6px;
+        }
+        .profile-card p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .status {
+            background: #f5f7fb;
+            border-left: 3px solid #1f3864;
+            padding: 8px 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.88rem;
+            color: #333;
+        }
+
+        .exam-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            font-size: 0.85rem;
+            color: #6b4f00;
+        }
+        .exam-notice strong { color: #856404; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏢 Employee Directory</h1>
+        <span id="welcome-msg">Not logged in</span>
+    </header>
+
+    <main>
+
+        <!-- Exam context notice – do not remove -->
+        <div class="exam-notice">
+            <strong>CYSE 411 – Q4 Exam Environment.</strong>
+            Open the browser DevTools Console to observe the effects of the
+            vulnerabilities and verify your fixes. 
+        </div>
+
+        <!-- Search -->
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search by name or department…" />
+            <button id="search-btn">Search</button>
+        </div>
+        <div id="search-label"></div>
+
+        <!-- Profile cards rendered by app.js -->
+        <div id="directory"></div>
+
+    </main>
+
+    <!-- Seed a session into sessionStorage for Q4.C testing.
+         A legitimate session looks like this.
+         you should also test with a TAMPERED session,
+         e.g. open DevTools → Application → Session Storage and
+         change the value to: {"userId":"","role":"","displayName":""} -->
+    <script>
+        sessionStorage.setItem("session", JSON.stringify({
+            userId: "u-8821",
+            role: "employee",
+            displayName: "Alex Rivera"
+        }));
+    </script>
+
+    <!-- Student's code (do not change this path) -->
+    <script src="src/app.js"></script>
+
+</body>
+</html>
